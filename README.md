@@ -92,3 +92,7 @@ python3 scrapers/registry.py --source todos_supermercados --term "leche" --limit
 ## Despliegue en producción
 
 El repositorio incluye `Dockerfile` y `render.yaml` listos para desplegar en Render, Railway o Fly.io configurando `GEMINI_API_KEY` en las variables de entorno de la plataforma.
+
+
+## APP online
+link: [radar-mercado](https://radar-mercado-jobq.onrender.com/)
