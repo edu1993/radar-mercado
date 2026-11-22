@@ -1,15 +1,17 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Radar } from 'lucide-react';
 import {
   clearSearchHistory,
   deleteStudyById,
   fetchAssistantHistory,
+  fetchAuthConfig,
   fetchMe,
   fetchSearchHistory,
   fetchSearchVariations,
   fetchSources,
   fetchStudyById,
   loginUser,
+  loginWithGoogle,
   logoutUser,
   registerUser,
   runMarketSearch,
@@ -79,9 +81,12 @@ export default function App() {
 
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY) || '');
   const [currentUser, setCurrentUser] = useState('');
+  const [userAvatar, setUserAvatar] = useState('');
+  const [googleClientId, setGoogleClientId] = useState(import.meta.env.VITE_GOOGLE_CLIENT_ID || '');
   const [checkingSession, setCheckingSession] = useState(Boolean(localStorage.getItem(TOKEN_KEY)));
   const [authMode, setAuthMode] = useState('login');
   const [authUsername, setAuthUsername] = useState('');
+  const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [honeypot, setHoneypot] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
@@ -145,6 +150,11 @@ export default function App() {
         if (Array.isArray(list) && list.length > 0) setSources(list);
       })
       .catch(() => {});
+    fetchAuthConfig()
+      .then((cfg) => {
+        if (cfg?.googleClientId) setGoogleClientId(cfg.googleClientId);
+      })
+      .catch(() => {});
   }, []);
 
   const resetFilters = () => {
@@ -199,7 +209,8 @@ export default function App() {
     }
     fetchMe(token)
       .then((me) => {
-        setCurrentUser(me.username);
+        setCurrentUser(me.displayName || me.username);
+        setUserAvatar(me.avatarUrl || '');
         return loadHistory(token, '', false);
       })
       .catch(() => {
@@ -233,13 +244,19 @@ export default function App() {
     setAuthLoading(true);
     try {
       const fn = authMode === 'register' ? registerUser : loginUser;
-      const res = await fn({ username: authUsername, password: authPassword, website_url: honeypot });
+      const payload =
+        authMode === 'register'
+          ? { username: authUsername, email: authEmail.trim() || undefined, password: authPassword, website_url: honeypot }
+          : { username: authUsername, password: authPassword, website_url: honeypot };
+      const res = await fn(payload);
       localStorage.setItem(TOKEN_KEY, res.token);
       setToken(res.token);
-      setCurrentUser(res.username);
+      setCurrentUser(res.displayName || res.username);
+      setUserAvatar(res.avatarUrl || '');
       setAuthPassword('');
+      setAuthEmail('');
       await loadHistory(res.token, '', false);
-      showToast(`Conectado como ${res.username}.`);
+      showToast(`Conectado como ${res.displayName || res.username}.`);
     } catch (err) {
       setAuthError(err.message);
     } finally {
@@ -247,11 +264,30 @@ export default function App() {
     }
   };
 
+  const handleGoogleCredential = useCallback(async (credential) => {
+    setAuthError('');
+    setAuthLoading(true);
+    try {
+      const res = await loginWithGoogle(credential);
+      localStorage.setItem(TOKEN_KEY, res.token);
+      setToken(res.token);
+      setCurrentUser(res.displayName || res.username);
+      setUserAvatar(res.avatarUrl || '');
+      await loadHistory(res.token, '', false);
+      showToast(`Conectado con Google como ${res.displayName || res.username}.`);
+    } catch (err) {
+      setAuthError(err.message);
+    } finally {
+      setAuthLoading(false);
+    }
+  }, []);
+
   const handleLogout = async () => {
     try { if (token) await logoutUser(token); } catch {}
     localStorage.removeItem(TOKEN_KEY);
     setToken('');
     setCurrentUser('');
+    setUserAvatar('');
     setHistoryList([]);
     setActiveStudy(null);
   };
@@ -689,6 +725,8 @@ export default function App() {
         setAuthMode={setAuthMode}
         authUsername={authUsername}
         setAuthUsername={setAuthUsername}
+        authEmail={authEmail}
+        setAuthEmail={setAuthEmail}
         authPassword={authPassword}
         setAuthPassword={setAuthPassword}
         honeypot={honeypot}
@@ -696,6 +734,8 @@ export default function App() {
         authLoading={authLoading}
         authError={authError}
         setAuthError={setAuthError}
+        googleClientId={googleClientId}
+        onGoogleCredential={handleGoogleCredential}
         onSubmit={handleAuthSubmit}
       />
     );
@@ -718,6 +758,7 @@ export default function App() {
         hasActiveStudy={Boolean(activeStudy)}
         onGoHome={() => { setActiveStudy(null); resetFilters(); setMobilePanel('dashboard'); }}
         currentUser={currentUser}
+        userAvatar={userAvatar}
         historyCount={historyList.length}
         onLogout={handleLogout}
       />

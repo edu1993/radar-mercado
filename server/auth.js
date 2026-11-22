@@ -24,7 +24,7 @@ function requireAuth(db) {
 
     const tokenHash = hashToken(match[1]);
     const row = db.prepare(`
-      SELECT s.token_hash, s.expires_at, u.id AS user_id, u.username
+      SELECT s.token_hash, s.expires_at, u.id AS user_id, u.username, u.display_name, u.avatar_url
       FROM sessions s
       JOIN users u ON u.id = s.user_id
       WHERE s.token_hash = ?
@@ -35,7 +35,12 @@ function requireAuth(db) {
       return res.status(401).json({ error: 'Tu sesión venció. Volvé a iniciar sesión.' });
     }
 
-    req.user = { id: row.user_id, username: row.username };
+    req.user = {
+      id: row.user_id,
+      username: row.username,
+      displayName: row.display_name || row.username,
+      avatarUrl: row.avatar_url || ''
+    };
     req.tokenHash = tokenHash;
     next();
   };

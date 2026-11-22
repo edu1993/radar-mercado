@@ -16,6 +16,20 @@ function ensureStudyColumns(db) {
   }
 }
 
+function ensureUserColumns(db) {
+  const columns = db.prepare('PRAGMA table_info(users)').all().map((col) => col.name);
+  if (!columns.includes('google_sub')) {
+    db.exec('ALTER TABLE users ADD COLUMN google_sub TEXT');
+  }
+  if (!columns.includes('display_name')) {
+    db.exec('ALTER TABLE users ADD COLUMN display_name TEXT');
+  }
+  if (!columns.includes('avatar_url')) {
+    db.exec('ALTER TABLE users ADD COLUMN avatar_url TEXT');
+  }
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_sub ON users(google_sub) WHERE google_sub IS NOT NULL');
+}
+
 function seedSourcesTable(db) {
   const upsert = db.prepare(`
     INSERT INTO sources (key, name, currency, region, active, status, max_limit, base_url)
@@ -76,6 +90,9 @@ function initDatabase(dbPath = process.env.SQLITE_PATH || path.join(__dirname, '
       email TEXT UNIQUE,
       password_salt TEXT NOT NULL,
       password_hash TEXT NOT NULL,
+      google_sub TEXT,
+      display_name TEXT,
+      avatar_url TEXT,
       created_at TEXT NOT NULL
     );
 
@@ -121,6 +138,7 @@ function initDatabase(dbPath = process.env.SQLITE_PATH || path.join(__dirname, '
   `);
 
   ensureStudyColumns(db);
+  ensureUserColumns(db);
   seedSourcesTable(db);
   cleanupExpiredSessions(db);
 

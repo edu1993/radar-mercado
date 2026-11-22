@@ -6,6 +6,12 @@ export const registerUser = (payload) =>
 export const loginUser = (payload) =>
   http.post('/auth/login', payload);
 
+export const fetchAuthConfig = () =>
+  http.get('/auth/config');
+
+export const loginWithGoogle = (credential) =>
+  http.post('/auth/google', { credential });
+
 export const fetchMe = (token) =>
   http.get('/auth/me', authConfig(token));
 

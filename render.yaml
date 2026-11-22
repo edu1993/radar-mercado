@@ -13,3 +13,5 @@ services:
         generateValue: true
       - key: SEARCH_CACHE_MINUTES
         value: "30"
+      - key: GOOGLE_CLIENT_ID
+        sync: false

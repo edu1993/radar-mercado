@@ -16,6 +16,7 @@ export default function HeaderBar({
   hasActiveStudy,
   onGoHome,
   currentUser,
+  userAvatar,
   historyCount,
   onLogout
 }) {
@@ -60,8 +61,17 @@ export default function HeaderBar({
           </button>
         )}
         <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full border border-slate-200 bg-slate-50 text-xs text-slate-600">
-          <User className="w-3.5 h-3.5 text-emerald-700" />
-          <span className="font-semibold text-slate-900">{currentUser}</span>
+          {userAvatar ? (
+            <img
+              src={userAvatar}
+              alt={currentUser}
+              referrerPolicy="no-referrer"
+              className="w-5 h-5 rounded-full object-cover border border-teal-200"
+            />
+          ) : (
+            <User className="w-3.5 h-3.5 text-emerald-700" />
+          )}
+          <span className="font-semibold text-slate-900 max-w-[140px] truncate">{currentUser}</span>
           <span>·</span>
           <span>{historyCount === 1 ? '1 búsqueda' : `${historyCount} búsquedas`}</span>
         </div>
