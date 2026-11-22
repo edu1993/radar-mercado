@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: radar-mercado
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-flash-lite-latest
+      - key: IP_HASH_SALT
+        generateValue: true
+      - key: SEARCH_CACHE_MINUTES
+        value: "30"

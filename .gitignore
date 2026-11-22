@@ -1,0 +1,13 @@
+node_modules/
+dist/
+data/
+coverage/
+.env
+.venv/
+venv/
+.DS_Store
+__pycache__/
+*.pyc
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

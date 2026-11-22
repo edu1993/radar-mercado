@@ -1,0 +1,40 @@
+name: CI — Radar Mercado
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependencias Node
+        run: npm install
+
+      - name: Instalar dependencias Python
+        run: pip install -r scrapers/requirements.txt
+
+      - name: Ejecutar tests unitarios e integración (Node + SQLite)
+        run: npm test
+
+      - name: Ejecutar tests de extractores (Python)
+        run: npm run test:scrapers
+
+      - name: Compilar frontend de producción (Vite)
+        run: npm run build
